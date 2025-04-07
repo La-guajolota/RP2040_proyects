@@ -28,25 +28,33 @@ set(PICO_BOARD pico CACHE STRING "Board type")
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
-project(hello_48MHz C CXX ASM)
+project(PSK C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(hello_48MHz
-        hello_48MHz.c
-        )
+add_executable(PSK PSK.c )
+
+pico_set_program_name(PSK "PSK")
+pico_set_program_version(PSK "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_usb(hello_48MHz 1)        
-pico_enable_stdio_uart(hello_48MHz 1)
+pico_enable_stdio_uart(PSK 1)
+pico_enable_stdio_usb(PSK 1)
 
-# pull in common dependencies and additional clocks hardware support
-target_link_libraries(hello_48MHz pico_stdlib hardware_clocks)
+# Add the standard library to the build
+target_link_libraries(PSK
+        pico_stdlib
+        hardware_pwm
+        hardware_clocks
+        hardware_pio)
 
-# create map/bin/hex file etc.
-pico_add_extra_outputs(hello_48MHz)
+# Add the standard include files to the build
+target_include_directories(PSK PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}
+)
 
-# add url via pico_set_program_url
+pico_add_extra_outputs(PSK)
+
