@@ -41,12 +41,15 @@ pico_set_program_name(ASK_FSK "ASK_FSK")
 pico_set_program_version(ASK_FSK "0.1")
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(ASK_FSK 0)
-pico_enable_stdio_usb(ASK_FSK 0)
+pico_enable_stdio_uart(ASK_FSK 1)
+pico_enable_stdio_usb(ASK_FSK 1)
 
 # Add the standard library to the build
 target_link_libraries(ASK_FSK
-        pico_stdlib)
+        pico_stdlib
+        hardware_pwm
+        hardware_clocks
+        hardware_pio)
 
 # Add the standard include files to the build
 target_include_directories(ASK_FSK PRIVATE

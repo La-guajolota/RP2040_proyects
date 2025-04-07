@@ -22,6 +22,7 @@
 // ADC defines
 #define ADC_PIN 26        ///< ADC pin
 #define BUFFER_LENGTH 256 ///< Buffer length
+#define TSAMPLE_RATE 200  ///< Sample rate in microseconds
 
 volatile uint16_t adc_buffer[BUFFER_LENGTH]; ///< Buffer for ADC values
 volatile uint16_t buffer_index = 0;          ///< Index for the buffer
@@ -60,7 +61,7 @@ int main()
     sleep_ms(2000);
 
     // Debug: Print a message to confirm the program has started
-    printf("Program started\n");
+    // printf("Program started\n");
 
     // Initialize ADC
     adc_init();
@@ -68,20 +69,20 @@ int main()
     adc_select_input(0); // Select ADC input 0
 
     // Debug: Print ADC initialization message
-    printf("ADC initialized on pin %d\n", ADC_PIN);
+    // printf("ADC initialized on pin %d\n", ADC_PIN);
 
     // Initialize the adc buffer
     initialize_adc_buffer();
 
     // Create a repeating timer for periodic sampling (200us -> 5kHz)
-    add_repeating_timer_us(-200, repeating_timer_callback, NULL, &timer);
+    add_repeating_timer_us(-TSAMPLE_RATE, repeating_timer_callback, NULL, &timer);
 
     while (true)
     {
         // Main loop can process the buffer if needed
         if (full_buffer)
         {
-            printf("Buffer full, sending data...\n");
+            // printf("Buffer full, sending data...\n");
 
             // Send the buffer over USB (stdout)
             for (int i = 0; i < BUFFER_LENGTH; i++)
@@ -95,7 +96,7 @@ int main()
             buffer_index = 0; // Reset buffer index
 
             // Restart the timer
-            add_repeating_timer_us(-200, repeating_timer_callback, NULL, &timer);
+            add_repeating_timer_us(-TSAMPLE_RATE, repeating_timer_callback, NULL, &timer);
         }
     }
 }
