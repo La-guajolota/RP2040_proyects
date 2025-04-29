@@ -20,9 +20,9 @@
 #define UART0_TX_PIN 0 ///< UART0 TX pin
 
 // ADC defines
-#define ADC_PIN 26        ///< ADC pin
-#define BUFFER_LENGTH 256 ///< Buffer length
-#define TSAMPLE_RATE 200  ///< Sample rate in microseconds
+#define ADC_PIN 26         ///< ADC pin
+#define BUFFER_LENGTH 1024 ///< Buffer length
+#define TSAMPLE_RATE 200   ///< Sample rate in microseconds
 
 volatile uint16_t adc_buffer[BUFFER_LENGTH]; ///< Buffer for ADC values
 volatile uint16_t buffer_index = 0;          ///< Index for the buffer
@@ -58,7 +58,7 @@ int main()
     stdio_init_all();
 
     // Add a delay to ensure USB is ready
-    sleep_ms(2000);
+    sleep_ms(1);
 
     // Debug: Print a message to confirm the program has started
     // printf("Program started\n");
@@ -87,7 +87,7 @@ int main()
             // Send the buffer over USB (stdout)
             for (int i = 0; i < BUFFER_LENGTH; i++)
             {
-                printf("%d\n", adc_buffer[i]);
+                printf("%d\r\n", adc_buffer[i]);
             }
 
             // Reset the flag after processing
