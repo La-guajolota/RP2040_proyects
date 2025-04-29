@@ -42,6 +42,7 @@
     "stdlib.h": "c",
     "i2c.h": "c",
     "time.h": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "irq.h": "c"
   }
 }
