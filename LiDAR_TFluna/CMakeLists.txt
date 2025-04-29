@@ -62,6 +62,7 @@ target_link_libraries(LiDAR_TFluna
     pico_stdlib
     hardware_i2c
     hardware_irq
+    hardware_pwm
     tf_luna
 )  
 
