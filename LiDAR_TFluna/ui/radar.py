@@ -108,8 +108,8 @@ def create_radar_interface(serial_port, baud_rate):
     root.title("Radar Interface")
 
     # Canvas dimensions and radar properties
-    canvas_width = 700
-    canvas_height = 700
+    canvas_width = 710
+    canvas_height = 710
     radar_radius = 350
     radar_center = (canvas_width // 2, canvas_height // 2)
 

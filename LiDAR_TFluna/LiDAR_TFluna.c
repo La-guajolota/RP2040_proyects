@@ -54,7 +54,6 @@ int main()
     // Configure interrupt for rising edge on the "data ready" signal.
     gpio_set_irq_enabled_with_callback(TF_LUNA_MUX_OUT, GPIO_IRQ_EDGE_RISE, true, &gpio_callback);
 
-    // Main loop.
     while (true)
     {
         if (data_ready)

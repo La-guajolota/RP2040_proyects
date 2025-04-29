@@ -32,15 +32,6 @@ typedef struct tf_luna
 } tf_luna_t;
 
 /**
- * @brief Reads data from the TF-Luna sensor over I2C.
- *
- * @param data Pointer to the buffer where the read data will be stored.
- * @param reg The register address to read from.
- * @param len The number of bytes to read.
- */
-void i2c_read(uint8_t *data, uint8_t reg, uint8_t len);
-
-/**
  * @brief Reads the distance value from the TF-Luna sensor.
  *
  * This function reads two bytes from the sensor and combines them into a 16-bit distance value.
