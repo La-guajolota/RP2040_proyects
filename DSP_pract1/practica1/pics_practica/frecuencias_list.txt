@@ -1,0 +1,22 @@
+  Ts  | var_python  
+20us
+img1_1 2bits
+img1_2 3bits
+img1_3 4bits
+
+1000us
+img2_1 2bits 
+img2_2 3bits
+img2_3 4bits
+
+500us
+img3_1 2bits
+img3_2 3bits
+img3_3 4bits
+
+100us  
+img4_1 1bits
+img4_2 3bits
+img4_3 4bits
+
+
