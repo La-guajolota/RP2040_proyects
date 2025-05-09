@@ -5,6 +5,7 @@ import threading
 
 # Global variable to track the current angle of the radar
 current_angle = 0
+ANGLE_STEP = 10 # Angle increment for each data point (in degrees)
 
 # Dictionary to store the distance values for each angle
 distance_data = {}
@@ -16,9 +17,11 @@ distance_data = {}
 """
 @brief Reads data from the serial port and updates the radar interface.
 
-This function continuously listens to the specified serial port for incoming data.
-When data is received, it is parsed as an integer representing the distance and
-used to update the radar visualization.
+The data format should be: <angle>:<distance>\n
+- <angle>: The angle in degrees (0-360).
+- <distance>: The distance in centimeters.
+
+Example: "90:150\n" (angle 90°, distance 150 cm).
 
 @param port The serial port to listen to (e.g., '/dev/ttyACM0').
 @param baudrate The baud rate for the serial communication.
@@ -27,7 +30,7 @@ used to update the radar visualization.
 @param radar_radius The radius of the radar visualization.
 """
 def read_serial(port, baudrate, canvas, radar_center, radar_radius):
-    global current_angle, distance_data
+    global distance_data
     try:
         with serial.Serial(port, baudrate, timeout=1) as ser:
             print("Listening on serial port...")
@@ -35,15 +38,21 @@ def read_serial(port, baudrate, canvas, radar_center, radar_radius):
                 if ser.in_waiting > 0:  # Check if data is available
                     data = ser.readline().decode('utf-8').strip()  # Read and decode the data
                     try:
-                        distance = int(data)  # Convert the data to an integer
-                        # Store the distance for the current angle
-                        distance_data[current_angle] = distance
-                        # Update the radar visualization for the current angle
-                        update_radar(canvas, radar_center, radar_radius, current_angle, distance)
-                        # Increment the angle for the next update
-                        current_angle = (current_angle + 1) % 360  # Increment by 1 degree, wrap around at 360
-                    except ValueError:
-                        print(f"Invalid data: {data}")  # Handle invalid data
+                        # Split the data into angle and distance
+                        angle_str, distance_str = data.split(':')
+                        angle = int(angle_str)  # Convert angle to integer
+                        distance = int(distance_str)  # Convert distance to integer
+
+                        # Validate angle and distance
+                        if 0 <= angle <= 360 and distance >= 0:
+                            # Store the distance for the given angle
+                            distance_data[angle] = distance
+                            # Update the radar visualization
+                            update_radar(canvas, radar_center, radar_radius, angle, distance)
+                        else:
+                            print(f"Invalid data: {data}")  # Handle out-of-range values
+                    except (ValueError, IndexError):
+                        print(f"Invalid data format: {data}")  # Handle invalid data
     except serial.SerialException as e:
         print(f"Error: {e}")  # Handle serial port errors
 

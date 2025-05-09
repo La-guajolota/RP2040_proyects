@@ -36,15 +36,31 @@ add_library(tf_luna
     tf_luna/tf_luna.c
 )
 
+# Agrega otra biblioteca como una librería
+add_library(mg995
+    mg995/mg995.c
+)
+
 # Establece los directorios de inclusión para la biblioteca
 target_include_directories(tf_luna PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/tf_luna
+)
+
+# Establece los directorios de inclusión para la biblioteca mg995
+target_include_directories(mg995 PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/mg995
 )
 
 # Enlaza componentes del SDK de Pico a tu biblioteca
 target_link_libraries(tf_luna PUBLIC
     pico_stdlib
     hardware_i2c
+)
+
+# Enlaza componentes del SDK de Pico a la biblioteca mg995
+target_link_libraries(mg995 PUBLIC
+    pico_stdlib
+    hardware_pwm
 )
 
 # Add executable. Default name is the project name, version 0.1  
@@ -64,6 +80,7 @@ target_link_libraries(LiDAR_TFluna
     hardware_irq
     hardware_pwm
     tf_luna
+    mg995
 )  
 
 # Add the standard include files to the build 
