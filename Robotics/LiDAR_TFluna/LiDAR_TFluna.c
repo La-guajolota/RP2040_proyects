@@ -9,7 +9,7 @@
 #include "hardware/irq.h"
 
 // User-defined includes
-#include "mg995.h" // Include the configuration header for servo setup
+#include "sg90.h" // Include the configuration header for servo setup
 #include "tf_luna.h"
 
 // Instances

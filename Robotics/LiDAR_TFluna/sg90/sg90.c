@@ -1,4 +1,4 @@
-#include "mg995.h"
+#include "sg90.h"
 
 // PWM configuration variables
 uint slice_num;

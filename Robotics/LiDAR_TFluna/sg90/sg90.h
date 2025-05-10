@@ -1,5 +1,5 @@
-#ifndef MG995_H
-#define MG995_H
+#ifndef SG90_H
+#define SG90_H
 
 #include <hardware/gpio.h>
 #include "pico/stdlib.h"
@@ -26,4 +26,4 @@ void scan_servo(void);
  */
 void setup_servo(void);
 
-#endif // MG995_H
+#endif // SG90_H
