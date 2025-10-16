@@ -22,75 +22,90 @@
 #include "hardware/adc.h"
 
 // PINOUTS MCU
-#define ADC_PIN 26     ///< ADC input pin
-#define UART0_TX_PIN 0 ///< UART0 TX pin
-#define UART0_RX_PIN 1 ///< UART0 RX pin
+#define ADC_PIN 26     ///< The GPIO pin used for ADC input.
+#define UART0_TX_PIN 0 ///< The GPIO pin used for UART0 transmit.
+#define UART0_RX_PIN 1 ///< The GPIO pin used for UART0 receive.
 
 // UART PARAMS
-#define BAUD_RATE 115200 ///< UART baud rate
+#define BAUD_RATE 115200 ///< The baud rate for UART communication.
 
 // PROTOTYPES
-volatile bool timer_flag = false;           ///< Flag to indicate timer event
-bool timer_callback(repeating_timer_t *rt); ///< Timer callback function prototype
+volatile bool timer_flag = false;           ///< A flag to indicate that the timer has fired.
+bool timer_callback(repeating_timer_t *rt); ///< The callback function for the repeating timer.
 
 // GLOBAL
-const int64_t SAMPLE_TIME = 100; ///< Sample time in us 20, 1000, 500,100
-volatile uint32_t adc_value;     ///< Variable to store ADC value
-char buffer[10];                 ///< Buffer for UART transmission
+const int64_t SAMPLE_TIME = 100; ///< The time between ADC samples, in microseconds.
+volatile uint32_t adc_value;     ///< A variable to store the ADC value.
+char buffer[10];                 ///< A buffer to store the string to be transmitted over UART.
 
+/**
+ * @brief The main function of the program.
+ *
+ * This function initializes the necessary peripherals (stdio, UART, ADC), sets up a repeating timer
+ * to trigger ADC readings, and then enters an infinite loop to process the ADC data.
+ *
+ * @return int This function should not return.
+ */
 int main()
 {
-    // Initialize peripherals
+    // Initialize all standard I/O
     stdio_init_all();
+    // Initialize UART0 with the specified baud rate
     uart_init(uart0, BAUD_RATE);
+    // Initialize the ADC
     adc_init();
 
-    // Periodic timer configuration
+    // Create a repeating timer that calls timer_callback every SAMPLE_TIME microseconds
     repeating_timer_t timer;
     add_repeating_timer_us(SAMPLE_TIME, timer_callback, NULL, &timer);
 
-    // Set the TX and RX pins by using the function select on the GPIO
+    // Set the GPIO function for the UART pins
     gpio_set_function(UART0_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(UART0_RX_PIN, GPIO_FUNC_UART);
 
-    // ADC configuration
+    // Initialize the ADC GPIO pin
     adc_gpio_init(ADC_PIN);
+    // Select ADC input 0 (GPIO26)
     adc_select_input(0);
 
-    // Get the frequency of the clocks
+    // Get and print the clock frequencies
     uint f_clk_sys = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS);
     uint f_clk_adc = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_ADC);
-    printf("Código corriendo OK :)\n");
+    printf("Code running OK :)\n");
     printf("clk_adc  = %dkHz\n", f_clk_adc);
     printf("clk_sys  = %dkHz\n", f_clk_sys);
     sleep_ms(5000);
 
+    // Infinite loop
     while (true)
     {
+        // Check if the timer has fired
         if (timer_flag)
         {
+            // Reset the timer flag
             timer_flag = false;
 
+            // Oversampling and averaging to reduce noise
             adc_value = 0;
             for (int i = 0; i < 4; i++)
             {
                 adc_value += adc_read();
-                // sleep_us(1);
             }
-
             adc_value /= 4;
-            printf("%d\n", adc_value); // 434.028us to transmit 5 characteres in 115200 baudrate
+
+            // Print the ADC value to the console. This data can be captured by a Python script for further analysis.
+            printf("%d\n", adc_value); // It takes approximately 434.028us to transmit 5 characters at 115200 baudrate
         }
     }
 }
 
 /**
- * @brief Timer callback function
+ * @brief The callback function for the repeating timer.
  *
- * Sets the timer_flag to true to indicate a timer event.
+ * This function is called every time the repeating timer fires. It sets the timer_flag to true.
  *
- * @param rt Pointer to the repeating_timer_t structure
- * @return true Always returns true to keep the timer repeating
+ * @param rt A pointer to the repeating_timer_t structure.
+ * @return bool Always returns true to keep the timer repeating.
  */
 bool timer_callback(repeating_timer_t *rt)
 {

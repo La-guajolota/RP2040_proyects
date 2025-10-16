@@ -1,23 +1,17 @@
 /**
  * @file PSK.c
- * @brief Implementation of PWM configuration for PSK modulation on the Raspberry Pi Pico (RP2040).
+ * @brief Generates the carrier signals for Binary Phase Shift Keying (BPSK) modulation.
  *
  * @details
- * This program configures two GPIO pins to output PWM signals with the same frequency but with a 180-degree
- * phase shift between them. The signals are generated with opposite logic (one active high, the other active low),
- * effectively creating a phase-shifted square wave pair suitable for PSK modulation.
+ * This program demonstrates how to generate the two fundamental carrier signals required for BPSK
+ * modulation using the RP2040's PWM hardware. It configures two PWM outputs to produce square waves
+ * of the same frequency but with a 180-degree phase difference.
  *
- * The program initializes the USB UART for debugging and configures the PWM signals. Debugging messages
- * are printed to verify the configuration.
+ * To create a complete BPSK modulator, you would need to add logic (e.g., using a multiplexer
+ * or another GPIO) to switch between these two signals based on a digital data stream (0s and 1s).
  *
- * @note
- * A 2:1 multiplexer (MUX) can be used to combine the two PWM signals into a single output for PSK modulation.
- * This implementation assumes external logic gates or circuitry to handle the combination.
- *
- * @author
- * Adrián Silva Palafox
- * @date
- * 2025-03-06
+ * @author Adrián Silva Palafox
+ * @date 2025-03-06
  */
 
 #include <stdio.h>
@@ -26,89 +20,76 @@
 #include "hardware/clocks.h"
 
 /**
- * @brief Configures a GPIO pin to output a PWM signal with a specified frequency and polarity.
+ * @brief Configures a GPIO pin to output a PWM signal with a 50% duty cycle.
  *
- * @param gpio The GPIO pin number to configure for PWM.
+ * @param gpio The GPIO pin number to configure.
  * @param freq_hz The desired frequency of the PWM signal in Hertz.
- * @param polarity The polarity of the PWM signal (true for active high, false for active low).
+ * @param inverted If true, the PWM output is inverted (active low). If false, it's normal (active high).
  *
  * @details
- * This function sets up the specified GPIO pin for PWM output. It calculates the clock divider and wrap
- * values required to achieve the desired frequency. The PWM signal is initialized with a 50% duty cycle.
- * The polarity parameter determines whether the signal is active high or active low.
+ * This function sets up a PWM slice to generate a square wave at a specific frequency.
+ * The key to creating the 180-degree phase shift is the `inverted` parameter, which controls
+ * the PWM channel's output polarity.
  */
-void setup_pwm(uint gpio, uint freq_hz, bool polarity)
+void setup_pwm_phase(uint gpio, uint freq_hz, bool inverted)
 {
-    // Configure the GPIO for PWM
+    // Configure the GPIO pin for PWM functionality
     gpio_set_function(gpio, GPIO_FUNC_PWM);
 
-    // Retrieve the PWM slice and channel for the GPIO
+    // Find out which PWM slice and channel is connected to this GPIO
     uint slice_num = pwm_gpio_to_slice_num(gpio);
     uint channel = pwm_gpio_to_channel(gpio);
 
-    // Calculate the clock divider and wrap value for the desired frequency
-    uint32_t clock_freq = clock_get_hz(clk_sys);          // System clock frequency
-    float divider = (float)clock_freq / (freq_hz * 4096); // Calculate the divider in decimal format
-    if (divider < 1.0f)
-        divider = 1.0f; // Minimum divider allowed by the hardware
+    // Calculate the clock divider and wrap value to achieve the desired frequency
+    uint32_t clock_freq = clock_get_hz(clk_sys);
+    float divider = (float)clock_freq / (freq_hz * 4096); // Using a common resolution for calculation
+    if (divider < 1.0f) divider = 1.0f; // Hardware minimum divider
 
-    uint32_t int_part = (uint32_t)divider;                      // Integer part of the divider
-    uint32_t frac_part = (uint32_t)((divider - int_part) * 16); // Fractional part (4 bits)
+    uint32_t wrap = (uint32_t)((float)clock_freq / (divider * freq_hz)) - 1;
 
-    uint32_t wrap = clock_freq / (freq_hz * divider) - 1; // Calculate the wrap value
-
-    // Debugging messages
-    printf("Configuring GPIO %d\n", gpio);
-    printf("Slice: %d, Channel: %d\n", slice_num, channel);
-    printf("Clock frequency: %u Hz\n", clock_freq);
-    printf("Divider: %f (int: %u, frac: %u), Wrap: %u\n", divider, int_part, frac_part, wrap);
-
-    // Configure the clock divider and wrap value
-    pwm_set_clkdiv_int_frac(slice_num, int_part, frac_part);
+    // Set the PWM clock divider
+    pwm_set_clkdiv(slice_num, divider);
+    // Set the PWM wrap value, which determines the period
     pwm_set_wrap(slice_num, wrap);
 
-    // Set PWM polarity (active high or active low)
-    pwm_set_output_polarity(slice_num, channel, polarity);
+    // Set the output polarity. This is how the 180-degree phase shift is created.
+    // One channel is normal, the other is inverted.
+    pwm_set_output_polarity(slice_num, !inverted, inverted);
 
-    // Set the duty cycle to 50%
+    // Set the duty cycle to 50% to create a square wave
     pwm_set_chan_level(slice_num, channel, wrap / 2);
 
-    // Enable the PWM output
+    // Enable the PWM slice
     pwm_set_enabled(slice_num, true);
 
-    // Final debugging message
-    printf("GPIO %d configured: Slice %d, Channel %d, Frequency %d Hz, Polarity: %s\n",
-           gpio, slice_num, channel, freq_hz, polarity ? "Active High" : "Active Low");
+    printf("GPIO %d configured: Freq=%d Hz, Inverted=%s\n", gpio, freq_hz, inverted ? "Yes" : "No");
 }
 
 /**
- * @brief Main function to initialize the USB UART and configure PWM signals for PSK modulation.
- *
- * @details
- * This function initializes the USB UART for debugging and configures two GPIO pins to output PWM signals
- * with the same frequency but opposite logic, creating a 180-degree phase shift between them.
+ * @brief Main function to initialize and configure the BPSK carrier signals.
  */
 int main()
 {
-    // Initialize the USB UART for debugging at 300 baud
-    stdio_uart_init_full(uart0, 300, PICO_DEFAULT_UART_TX_PIN, PICO_DEFAULT_UART_RX_PIN);
+    // Initialize stdio for debugging output via USB
+    stdio_init_all();
+    sleep_ms(2000); // Wait for the serial connection to establish
 
-    printf("Waiting for USB connection...\n");
-    sleep_ms(2000); // Wait 2 seconds to stabilize the connection
+    printf("Configuring PWM signals for BPSK carrier generation...\n");
 
-    // GPIO pins for PWM
-    const uint PWM_GPIO1 = 2; // GPIO 2 -> PWM1 A
-    const uint PWM_GPIO2 = 4; // GPIO 4 -> PWM2 A
+    // Define the GPIO pins for the two phases of the carrier signal
+    const uint CARRIER_0_DEG_PIN = 2;   // Represents the 0-degree phase carrier
+    const uint CARRIER_180_DEG_PIN = 4; // Represents the 180-degree phase carrier
 
-    // Configure the PWM signals with the same frequency but opposite polarity
-    setup_pwm(PWM_GPIO1, 1000, true);  // 1 kHz on GPIO 2, active high
-    setup_pwm(PWM_GPIO2, 1000, false); // 1 kHz on GPIO 4, active low
+    // Set up the two PWM signals with the same frequency but opposite polarity
+    setup_pwm_phase(CARRIER_0_DEG_PIN, 1000, false); // 1 kHz, normal polarity (0 degrees)
+    setup_pwm_phase(CARRIER_180_DEG_PIN, 1000, true);  // 1 kHz, inverted polarity (180 degrees)
 
-    printf("PWM configured on GPIO 2 and GPIO 4 for PSK modulation\n");
+    printf("BPSK carrier signals are now active on GPIO %d and GPIO %d.\n", CARRIER_0_DEG_PIN, CARRIER_180_DEG_PIN);
 
+    // The main loop is idle as the PWM hardware generates the signals independently.
     while (true)
     {
-        printf("PSK Modulation Active\n");
-        sleep_ms(250); // Wait 250 ms between messages
+        tight_loop_contents();
     }
 }
+
