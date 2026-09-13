@@ -1,0 +1,5 @@
+build
+.vscode/*
+.cache
+externals/
+test/logic_analyzer/*.sr
