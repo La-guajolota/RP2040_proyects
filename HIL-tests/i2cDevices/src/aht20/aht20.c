@@ -130,12 +130,18 @@ AHT20_rst_t AHT20_measure(AHT20_data_t *pAHT20_data)
     float rh, temp;
 
     if (m_AHT20_command_measure() != AHT20_OK)
+    {
+        printf("[AHT20] measure: I2C write failed (NACK/timeout)\n");
         return AHT20_ERR;
+    }
 
     sleep_ms(AHT20_DELAY_MEASUREMENT); // wait for the measurement to complete
 
     if (m_AHT20_get_result(pAHT20_data, 7) != AHT20_OK)
+    {
+        printf("[AHT20] measure: I2C read failed (NACK/timeout)\n");
         return AHT20_ERR;
+    }
 
     m_AHT20_decode_status(pAHT20_data);
     if (pAHT20_data->is_busy)

@@ -1,6 +1,7 @@
 #include "pico/stdlib.h"
 #include "pico_test.h"
 #include "aht20/aht20.h"
+#include "ssd1306/ssd1306.h"
 
 // Same I2C wiring as src/main.c (I2C0 on GPIO16/17) - the aht20 tests are
 // HIL tests that talk to the real sensor, so the bus needs to be brought up
@@ -11,6 +12,7 @@
 
 void run_sgp30_tests(void);
 void run_aht20_tests(void);
+void run_ssd1306_tests(void);
 void i2c_bus_scan(uint8_t times);
 
 // I2C reserves some addresses for special purposes. We exclude these from the scan.
@@ -32,11 +34,14 @@ int main(void)
     gpio_pull_up(I2C_SDA);
     gpio_pull_up(I2C_SCL);
     AHT20_init(I2C_PORT);
+    if (!ssd1306_init(I2C_PORT))
+        printf("SSD1306 init failed - check wiring/address\n");
 
     sleep_ms(2000); // give the USB CDC time to enumerate before we print
 
     run_sgp30_tests();
     run_aht20_tests();
+    run_ssd1306_tests();
     i2c_bus_scan(5);
 
     int failures = pico_test_summary();
