@@ -6,59 +6,41 @@
  * @license BSD-3-Clause
  */
 
+#include "pico.h"
 #include "pico/stdlib.h"
 
-#ifndef LED_DELAY_MS
 #define LED_DELAY_MS 250 ///< The delay in milliseconds between LED state changes.
-#endif
-
-#ifndef PICO_DEFAULT_LED_PIN
-#warning "blink_simple example requires a board with a regular LED"
-#endif
+#define DEFAULT_LED 25
+#define PWR_READ_PIN 14
+#define PWR_HOLD_PIN 15
 
 /**
  * @brief Initializes the GPIO for the LED.
  */
-void pico_led_init(void) {
-#ifdef PICO_DEFAULT_LED_PIN
-    // A device like Pico that uses a GPIO for the LED will define PICO_DEFAULT_LED_PIN
-    // so we can use normal GPIO functionality to turn the led on and off
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-#endif
+void gpios_init(void)
+{
+    gpio_init(DEFAULT_LED);
+    gpio_init(PWR_HOLD_PIN);
+    gpio_init(PWR_READ_PIN);
+
+    gpio_set_dir(DEFAULT_LED, GPIO_OUT);
+    gpio_set_dir(PWR_HOLD_PIN, GPIO_OUT);
+    gpio_set_dir(PWR_READ_PIN, GPIO_IN);
+
+    gpio_put(PWR_HOLD_PIN, true);
+    sleep_ms(1000);
 }
 
-/**
- * @brief Turns the LED on or off.
- * @param led_on true to turn the LED on, false to turn it off.
- */
-void pico_set_led(bool led_on) {
-#if defined(PICO_DEFAULT_LED_PIN)
-    // Just set the GPIO on or off
-    gpio_put(PICO_DEFAULT_LED_PIN, led_on);
-#endif
-}
-
-/**
- * @brief The main function of the program.
- *
- * Initializes the LED pin and then enters an infinite loop to blink the LED.
- *
- * @return int This function should not return.
- */
-int main() {
+int main()
+{
     // Initialize the LED pin.
-    pico_led_init();
+    gpios_init();
 
-    // Infinite loop to blink the LED.
-    while (true) {
-        // Turn the LED on.
-        pico_set_led(true);
-        // Wait for the specified delay.
-        sleep_ms(LED_DELAY_MS);
-        // Turn the LED off.
-        pico_set_led(false);
-        // Wait for the specified delay.
-        sleep_ms(LED_DELAY_MS);
+    while (true)
+    {
+        if (gpio_get(PWR_READ_PIN))
+        {
+            gpio_put(PWR_HOLD_PIN, false);
+        }
     }
 }
